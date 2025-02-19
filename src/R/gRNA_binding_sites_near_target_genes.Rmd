@@ -1,0 +1,245 @@
+---
+title: "Poplar CRISPR lines: off-target analysis and gRNA binding sites near target genes"
+subtitle: "u2023008"
+author: "Fai Theerarat Kochakarn & Kristina Benevides"
+date: "`r Sys.Date()`"
+output:
+ html_document:
+   fig_width: 9
+   fig_height: 6
+   toc: true
+   number_sections: true
+   toc_depth: 3
+   toc_float:
+     collapsed: TRUE
+     smooth_scroll: TRUE
+   code_folding: hide
+   theme: "flatly"
+   highlight: pygments
+   includes:
+     before_body: header.html
+     after_body: footer.html
+   css: style.css
+---
+
+# Method
+
+The genomic DNA reads were aligned onto Potra v2.2 and T89 v2.0 by using BWA-mem (0.7.17) and samtools (1.16). Duplicated reads were marked using Picard (2.27.1) and samtools (1.16). Variant (both SNPs and indels shorter than 50bp) calling and filtering was first done using GATK (4.2.6.1). Subsequently a second snp/indel call was made using bcftools (1.16) to confirm the results, as the performance of GATK drops dramatically if the reference sequence consists of many short contigs, which is the case with the T89 genome. We used quite relaxed criteria for bcftools (`--min-MQ 10 --min-BQ 20`) and did not apply any quality filtering to be able to call the insertion site for line 26. Having a good-quality haplotype resolved reference genome would be of great use in this case.
+
+We searched for CRISPR sites using the gRNA sequences with PAMs for SpCas9  (5’-NGG-3’/5’-NAG-3’) using Cas-OFFinder (v2.4.1). We tested allowing for 1, 3 and 5 mismatches with the gRNA query sequences. The potential off-target sites reported by Cas-OFFinder were intersected with the SNPs/indels using bedtools intersect (2.30.0) to find putative off-targets.
+
+Sequences for the SM and LSM genes were retrieved from Potra v2.2 and blasted against the T89 v2.0 assembly using NCBI Blast+ (2.13.0). Only hits longer than 1kbp were kept. We investigated if the putative off-targets were close to or overlapping these genes. 
+
+The transcript reads were aligned onto Potra v2.2 using STAR (2.7.10a). The visualization was done in IGV.
+
+The assumption made is that a putative off-target is a site likely near a gene which closely matches a gRNA with a PAM immediately adjacent to it, where we observe an insertion or deletion.
+
+Decision tree for off-target classification: 
+
+`Indels/SNPs (Yes) -> Overlap gRNA with a PAM (Yes) -> Is it within / next to a gene (Yes) => putative off-target.`
+
+# Off-target analysis 
+
+In summary, we could not find any off-targets for either line 3 or line 26 when using the above method, as the only sites found were related to the expected target sites. The results remained the same when looking at CRISPR sites with 1, 3 or 5 mismatches. 
+
+## Line 3
+
+The only sites matching this assumption for line 3 is:
+
+* `utg000005l	3986112	3986113	(utg000005l	3986106	3986129	-	Line3_CRISPR_4108_gRNA1)`
+
+* `utg000005l	3997344	3997345	(utg000005l	3997338	3997361	-	Line3_CRISPR_4108_gRNA1)`
+
+These cut sites are around 10-20 kb upstream the target gene for line 3 (Potra2n18c32411). We have a closer look at this the sections below.  
+
+## Line 26
+
+The only sites matching this assumption for line 26 is:
+
+* `utg000014l	8819751	8819752	(utg000014l	8819746	8819769	-	Line26_CRISPR_4110_gRNA1)`
+
+* `utg000014l	8819752	8819753	(utg000014l	8819746	8819769	-	Line26_CRISPR_4110_gRNA1)`
+
+These cut sites are within the target gene for line 26 (Potra2n6c13821). We have a closer look at this in the sections below.  
+
+# Regions matched to guide RNA using Potra v2.2 as reference
+
+We would like to show the alignment of genome and transcriptome in the area where guide RNA matched. We will look at the result using Potra v2.2 as reference first because we have gene model annotation for it
+
+## Overview of the guide RNA locations and the target gene 
+
+### Target gene of line 3 **Potra2n18c32411**
+
+Here we can see the location of **Line3_CRISPR_4108_gRNA1** and **Line3_CRISPR_4108_gRNA2** matching on the first exon and the forth exon of the target gene, respectively. We can see a deletion region (chr18:3,718,735-3,719,224) downstream to **Line3_CRISPR_4108_gRNA2** site in line 26 genome track. The target gene is disrupted in line 3 transcriptome tracks. The forth exon is skipped in T89 and line 26 transcriptome tracks.
+
+![ ](../../analysis/IGV/potra_tg_chr18.png)
+
+
+### Target gene of line 26 **Potra2n6c13821**
+
+Here we can see the location of **Line26_CRISPR_4110_gRNA1** and **Line26_CRISPR_4110_gRNA2** matching on the first exon and the third intron of the target gene, respectively. All splice junctions are unaltered from the transcriptome tracks.
+
+![ ](../../analysis/IGV/potra_tg_chr6.png)
+
+
+## Close-ups on the guide RNA sites 
+
+### **Line3_CRISPR_4108_gRNA1** targeting Line 3
+
+Sequence: GACTAGACGTACAATGGGTT
+
+reverse complement: AACCCATTGTACGTCTAGTC
+
+Here we can see a single base (T) insertion within the gRNA site in line 26 genome track. This insertion is not present in line 3 genome track. The location of the insertion is 3bp away from the PAM sequence so we are quite confident that this insertion is the result of CRISPR-Cas editing. The insertion presents in approximately half of the reads. Please note that there is also a shift of the splice donor site of the first intron 5bp upstream which is likely the result of the single base insertion. The shift in splice site can be seen in line 3 transcriptome tracks. Please note that the last base of the gRNA furthest away from the PAM is mismatched.
+
+![ ](../../analysis/IGV/potra_L3_gRNA1.png)
+
+
+The RNA reads in line 3 transcriptome tracks that have the shift of splice donor site of the fist intron also have shift in the splice acceptor site. They skip exon 2-3 which were expressed in control, and express exon 4 which was skipped in control. But with the new splice donor, splice acceptor of exon 4 is shift upstream by 52bp from the annotation.
+
+![ ](../../analysis/IGV/potra_L3_gRNA1_2.png)
+
+
+### **Line3_CRISPR_4108_gRNA2** targeting Line 3
+
+Sequence: GCACATAAGCAGATACGCTC
+
+reverse complement: GAGCGTATCTGCTTATGTGC
+
+Here we can see a single base (T) insertions within the gRNA site in line 26 genome track and line 26 transcriptome tracks. The variation in insertion visualization between genome and transcriptome is due to the variation in alignment. The actual sequence at CRISPR cut site is ATG **T** TGC where bold character is the inserted base. The gRNA site is within skipped exon 4 in T89 and line 26 transctiptome so we do not have data on those tracks. This single base insertion is not present in line 3 genome track so, it is likely to be the result of CRISPR-Cas editing. The location of the insertions is 3bp away from the PAM sequence. Please note that there are also reads that do not have any insertions.
+
+![ ](../../analysis/IGV/potra_L3_gRNA2_2.png)
+
+
+Here we can see a drop in coverage in line 26 genome track starting from within gRNA site, 2bp away from the PAM sequence, and continue downstream, which is likely a deletion. This deletion is 490 bp long and present only in approximately half of the reads.
+
+![ ](../../analysis/IGV/potra_L3_gRNA2_1.png)
+
+
+### **Line26_CRISPR_4110_gRNA1** targeting Line 26
+
+Sequence: GGTCATAATACGCTGGACTT
+
+reverse complement: AAGTCCAGCGTATTATGACC
+
+Here we can see single base insertions within the gRNA site in line 3 genome track and line 26 transcriptome tracks. These insertions are not present in line 26 genome track, line 3 or T89 transcriptome tracks. Therefore, they are likely to be the result of CRISPR-Cas editing. The location of the insertions is 3bp away from the PAM sequence. The variation in insertions visualization is due to the variation in alignment. The actual sequence at CRISPR cut site are AAG **G** TCC or AAG **T** TCC where bold characters are the inserted bases. G and T insertions are mutually exclusive. Please note that there are also reads that do not have any insertions.
+
+![ ](../../analysis/IGV/potra_L26_gRNA1.png)
+
+
+### **Line26_CRISPR_4110_gRNA2** targeting Line 26
+
+Sequence: TATAAAGAGCAAGAATTGAC
+
+reverse complement: GTCAATTCTTGCTCTTTATA
+
+Here we can not see any difference between line 3 and line 26 genome track. The gRNA site is within intron so we do not have data on transcriptome track. We found A -> G mutation, a single base (T) insertion and a single base deletion with in the gRNA site in both line 26 and line 3 genome tracks. The reads that have A -> G mutation and single base deletion are mutually exclusive from the reads that have single base insertion, which lead us to conclude that they are from different *P. tremula* and *P. tremuloides* haplotypes.
+
+The Potra v2.2 reference (...GCTCTTATA) has mismatch with the gRNA (...GCTCTTTATA) but the single T insertion correct this mismatch. Theoretically the gRNA can then be haplotype-specific. However, we noticed that the PAM sequence is 2bp away from gRNA site in the reads that contain the single T insertion. This might be the reason why we cannot see any difference between line 3 and line 26.
+
+![ ](../../analysis/IGV/potra_L26_gRNA2.png)
+
+
+## Summary from the alignment using Potra v2.2 as reference
+
+* There is very likely to be sample swap between line 26 and line 3 genomic DNA.
+
+* Guide RNAs targeting line 3 result in shift in splice donor site of the first intron, skipping of the second and third exons, expression of the forth exon with shifted splice acceptor site, and possibly a 490 bp deletion within the fourth intron of the target gene.
+
+* Guide RNA 1 targeting line 26 results in single base insertions in the first exon.
+
+* Guide RNA 2 targeting line 26 is likely to fail on editing because of the 2bp distance from PAM.
+
+# Regions matched to guide RNA using T89 as reference
+
+There are two haplotypes in T89 references namely primary and alternative. It is very likely that one of that is *P. tremula* and another is *P. tremuloides*. I align the target gene from Potra v2.2 onto both haplotypes and focus on gRNA site that are within the target gene regions.
+
+## Close-ups on the guide RNA sites 
+
+### **Line3_CRISPR_4108_gRNA1** targeting Line 3
+
+Sequence: GACTAGACGTACAATGGGTT
+
+reverse complement: AACCCATTGTACGTCTAGTC
+
+There is no insertion at the gRNA site within target gene location on utg000005l of primary haplotype.
+
+![ ](../../analysis/IGV/pri_L3_gRNA1.png)
+
+However, there is single base (T) insertion in line 26 genome track at two identical sites 8.5kb and 19kb upstream to the target gene on the same contig utg000005l.
+
+![ ](../../analysis/IGV/pri_L3_gRNA1_offtargetwithPAM1.png)
+
+![ ](../../analysis/IGV/pri_L3_gRNA1_offtargetwithPAM2.png)
+
+In utg000256l-alternative-haplotype, there is a 37bp deletion covering gRNA site and the PAM sequence in line 26 genome track.
+
+![ ](../../analysis/IGV/alt_L3_gRNA1.png)
+
+* We have checked transcriptomic reads mapped **without** annotation onto T89 haplotypes. We found that the gRNA1 sites 8.5kb and 19kb upstream to the target gene in primary haplotype only contain the first three exons per site. Therefore, they do not have similar sites for gRNA2. The shift in splice donor of the first intron 5bp upstream can be seen in a portion of reads at the target gene and at the site 19kb upstream in Line3_2 and Line3_4. If we consider all three sites together, we can see single T insertion and the shift of spice donor like in Potra v2.2. Please note that we can not find the 37bp deletion on alternative haplotype in the transcriptome. All transcriptomic reads mapped on alternative haplotype are similar to the primary haplotype with mixture of normal and shifted splice donor.
+
+### **Line3_CRISPR_4108_gRNA2** targeting Line 3
+
+Sequence: GCACATAAGCAGATACGCTC
+
+reverse complement: GAGCGTATCTGCTTATGTGC
+
+We found the single base (T) insertion in line 26 genome track within gRNA site in both primary (utg000005l) and alternative (utg000256l-alternative-haplotype) contigs. The picture below is from utg000005l.
+
+![ ](../../analysis/IGV/pri_L3_gRNA2.png)
+
+And the picture below is from utg000256l-alternative-haplotype.
+
+![ ](../../analysis/IGV/alt_L3_gRNA2.png)
+
+Next, we want to investigate the 490bp deletion that we saw using Potra v2.2 as reference. However, the coverage using T89 as refenence is lower. Detection of the large deletion can be difficult in lower coverage samples but we see roughly the boundary of the same deletion in line 26 genome track in both haplotypes. Both are 490bp long. The picture below is from utg000005l.
+
+![ ](../../analysis/IGV/pri_L3_gRNA2_del4006379-4006868.png)
+
+And the picture below is from utg000256l-alternative-haplotype.
+
+![ ](../../analysis/IGV/alt_L3_gRNA2_del603002-603491.png)
+
+
+### **Line26_CRISPR_4110_gRNA1** targeting Line 26
+
+Sequence: GGTCATAATACGCTGGACTT
+
+reverse complement: AAGTCCAGCGTATTATGACC
+
+We found the single base (G or T) insertions within gRNA site in line 3 genome track on both primary (utg000014l) and secondary (utg000037l-alternative-haplotype) contigs. The picture below is from utg000014l.
+
+![ ](../../analysis/IGV/pri_L26_gRNA1.png)
+
+And the picture below is from utg000037l-alternative-haplotype.
+
+![ ](../../analysis/IGV/alt_L26_gRNA1.png)
+
+
+### **Line26_CRISPR_4110_gRNA2** targeting Line 26
+
+Sequence: TATAAAGAGCAAGAATTGAC
+
+reverse complement: GTCAATTCTTGCTCTTTATA
+
+Here we plot only on alternative haplotype (utg000037l-alternative-haplotype) because it matches to the gRNA sequence while primary haplotype do not. Here we can not see single T insertion anymore because the reference sequence is similar to gRNA. However, the 2bp distance from PAM sequence which is downstream to gRNA site prevent CRISPR-Cas from editing this location.
+
+![ ](../../analysis/IGV/alt_L26_gRNA2.png)
+
+
+## Summary from the alignment using T89 as reference
+
+* The result still suggests sample swap between line 26 and line 3 genomic DNA.
+
+* We found no putative off-targets for line 3 and we could confirm a CRISPR-Cas editing event in the vicinity of the target gene Potra2n18c32411.
+
+* We found no putative off-targets for line 26 and by using a very relaxed method we could confirm a CRISPR-Cas editing for its target gene Potra2n6c13821. 
+
+* Guide RNA 1 targeting line 3 results in single base insertion and likely splice donor shift. The exact location of this editing is still ambiguous because of the present of target gene fragments in T89 genome.
+
+* Guide RNA 2 targeting line 3 results in single base insertion. We still see the possibly 490 bp deletion following gRNA2 site.
+
+* Guide RNA 1 targeting line 26 results in single base insertions.
+
+* Guide RNA 2 targeting line 26 is likely to fail on editing because of the 2bp distance from PAM.
+
