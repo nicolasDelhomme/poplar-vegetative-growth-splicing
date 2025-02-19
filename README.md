@@ -11,6 +11,8 @@ __Goretti D.1,2&, Collani S.1,2, Marcon A.3, Nilsson O.3, Schmid M.1,4&__
 
 This repository DOI: [![DOI](https://zenodo.org/badge/935348795.svg)](https://doi.org/10.5281/zenodo.14892044)
 
+The original repository DOI: [![DOI](https://zenodo.org/badge/706585581.svg)](https://doi.org/10.5281/zenodo.14892921)
+
 ## Abstract
 
 Spliceosomes, the molecular machinery that catalyzes RNA splicing, contain at their core heptameric rings of Sm (or LSm) proteins. Loss of Sm gene function can have detrimental consequences on plant growth and development, as exemplified by the strong temperature-sensitive phenotype of the sme1/pcp mutant in the model plant species Arabidopsis thaliana. In this work, we characterized the SmE genes from poplar. We found that poplar contains two paralogs SmE genes, PtSmEa and PtSmEb, that encode for identical proteins. Mutagenesis using CRISPR/Cas9 revealed both overlapping and specific functions of the two poplar SmE genes, which was further substantiated by transcriptome and alternative splicing analyses using RNA-seq. Our study provides a first glimpse at the function of Sm genes in a woody species and suggests a key role of PtSmEs in regulating vegetative growth in trees.
@@ -43,3 +45,7 @@ There are two CRISPR lines with different targets:
 
 * For the Line 26, the target locus is `Potri.006G174000/Potra001877g14982` (Potra2n6c13821)
 * For the Line 03 it is `Potri.018G096200/Potra001273g10998` ( 	Potra2n6c13821)
+
+## Note
+
+Because of ownership issues, the original repository could not be initially made public, hence the two repositories with different DOIs but similar content.
